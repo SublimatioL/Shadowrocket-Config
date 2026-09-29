@@ -1,63 +1,63 @@
-# Shadowrocket 大陆直连 / 境外代理
+# Shadowrocket: Mainland Direct / Overseas Proxy
 
-适用于中国大陆本地宽带或蜂窝网络。国内服务直连；境外服务经已选节点代理，IPv6 默认关闭。本仓库只提供 Shadowrocket 配置，不含节点或订阅。
+For devices using broadband or cellular networks in mainland China. Mainland services connect directly; overseas services use the selected proxy node. IPv6 is disabled by default. This repository provides a Shadowrocket configuration only, without nodes or subscriptions.
 
 ```text
-国内服务：大陆设备 -> 国内目标
-境外服务：大陆设备 -> 大陆中转入口 -> 境外出口 -> 目标服务
+Mainland services: mainland device -> mainland destination
+Overseas services: mainland device -> mainland relay -> overseas exit -> destination
 ```
 
-中转与出口由节点服务商提供，本配置不会创建服务器端链路。
+The node provider supplies the relay and overseas exit. This configuration does not create the server-side chain.
 
-## 导入
+## Import
 
-[配置直链](https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/main/safe%20and%20high%20speed-%20China%20to%20overseas.conf)
+[Configuration URL](https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/main/safe%20and%20high%20speed-%20China%20to%20overseas.conf)
 
-1. 在 Shadowrocket「配置」中添加上述 URL，下载并选中配置。
-2. 首页「全局路由」选择「配置」，再选择可用节点。`PROXY` 使用首页已选节点。
-3. 更新配置内的三个远程规则集，确认全部下载成功。首次下载失败时，可先用原有可联网配置完成下载。
-4. 首轮检查时停用会覆盖 DNS、路由或 HTTPS 解密的模块，以及浏览器自设 DNS、其他 DNS 描述文件。
-5. 需要通话或游戏时，确认节点支持并开启 UDP 转发；不支持时会拒绝相应代理 UDP，不回退直连。
+1. Add the URL under Config in Shadowrocket, download the configuration, and select it.
+2. Set Global Routing to Config on the home screen, then select a working node. `PROXY` uses the node selected there.
+3. Update all three remote rule sets and confirm that each download succeeds. If the initial download fails, use an existing working configuration to download them first.
+4. During initial checks, disable modules that override DNS, routing, or HTTPS decryption, along with custom browser DNS and other DNS profiles.
+5. For calls or gaming, confirm that the node supports UDP and has UDP forwarding enabled. Unsupported proxy UDP traffic is rejected, without falling back to a direct connection.
 
-## 分流
+## Routing
 
-按顺序首次匹配：DNS / IPv6 防护 -> 局域网与解析器地址 -> 明确的国内外域名 -> 远程代理列表 -> 远程直连列表 -> Telegram IP -> 大陆 IP -> 其余代理。
+The first matching rule wins: DNS / IPv6 guards -> LAN and resolver addresses -> explicit mainland and overseas domains -> remote proxy list -> remote direct list -> Telegram IPs -> mainland IPs -> proxy fallback.
 
-银行、支付、政务和常用国内 App 域名优先直连；Google、YouTube、GitHub、境外 AI 和常用境外社交通讯域名优先代理。规则按目的域名/IP 匹配，不按 App 包名匹配，共享域名不能区分来自哪个 App。
+Mainland banking, payment, government, and common app domains have direct-connection rules. Google, YouTube, GitHub, overseas AI services, and common overseas social and messaging domains have proxy rules. Matching uses destination domains/IPs, not app package names; shared domains cannot identify the originating app.
 
-## DNS 与 IPv6
+## DNS and IPv6
 
-| 查询用途 | 配置路径 |
+| Query type | Configured path |
 | --- | --- |
-| 国内直连域名 | 阿里 DNS / DNSPod DoH，直连 |
-| 节点域名 | 独立的国内 DoH，用于连接节点 |
-| 一般查询与境外代理域名 | Cloudflare DoH，经代理 |
-| 备用查询 | Google DoH，经代理 |
+| Mainland direct domains | AliDNS / DNSPod DoH, direct |
+| Node hostnames | Separate mainland DoH for connecting to the node |
+| General queries and overseas proxy domains | Cloudflare DoH, through the proxy |
+| Fallback queries | Google DoH, through the proxy |
 
-- 不配置明文或系统 DNS 回退；境外 DoH 地址带 `#proxy`。国内解析器仍能看到交给它们的域名。
-- 开启 `always-ip-address`，让客户端按配置解析后连接；境外首访可能增加解析等待，不承诺所有连接提速。
-- 国内 DNS 失败时可能使用境外代理 DoH 备用，业务仍保持 DIRECT，但 CDN 选址和延迟可能受影响。
-- 劫持列出的公共 DNS；拒绝进入规则引擎的其余 53 / 853 端口连接及裸 IPv6 连接。强制使用这些端口的 App 可能受影响。
-- `ipv6`、`prefer-ipv6` 均关闭；节点自身的 IPv6 解析也须单独检查。这不是关闭 iOS 系统 IPv6。
+- No plaintext or system DNS fallback is configured. Overseas DoH endpoints use `#proxy`. Mainland resolvers can still see the domains sent to them.
+- `always-ip-address` makes the client resolve domains through the configured paths before connecting. Initial overseas requests may take longer to resolve; this does not promise faster connections in every case.
+- If mainland DNS fails, fallback queries may use overseas DoH through the proxy. Service traffic remains DIRECT, but CDN selection and latency may change.
+- Listed public DNS servers are intercepted. Other connections to ports 53 / 853 and literal IPv6 connections that reach the rule engine are rejected. Apps that require these paths may be affected.
+- Both `ipv6` and `prefer-ipv6` are disabled. Check the node's own IPv6 resolution settings separately. This does not disable IPv6 system-wide on iOS.
 
-## 边界
+## Limitations
 
-配置不能保证 App 检测不到 VPN，也不能单独证明“零 DNS 泄露”。TUN Only 仍是 VPN；App 自带 HTTPDNS/DoH、系统绕行、共享域名错分和服务商行为需实机核验。国内域名及节点域名使用指定国内 DoH，是本配置允许的解析路径。
+This configuration cannot guarantee that apps will not detect the VPN, nor can it prove zero DNS leakage on its own. TUN Only is still a VPN. App-specific HTTPDNS/DoH, system bypasses, shared-domain misclassification, and provider behavior require testing on the device. Using the specified mainland DoH resolvers for mainland domains and node hostnames is an allowed DNS path in this configuration.
 
-VPN 关闭、崩溃或系统重建网络时，本配置不是系统级断网保护。`close-if-proxy-chain-missing` 只保护 Shadowrocket 自身缺失的链条引用，不控制服务商内部中转。本版不包含广告过滤或 HTTPS 解密，也不全局封禁 QUIC / STUN。
+This configuration is not a system-wide kill switch when the VPN is disabled, crashes, or the system rebuilds network connections. `close-if-proxy-chain-missing` only handles missing references in Shadowrocket's own proxy chains; it does not control the provider's internal relay. This version does not include ad blocking or HTTPS decryption, and does not globally block QUIC / STUN.
 
-## 检查
+## Verification
 
-1. 查看连接记录：国内 App 主要业务应为 DIRECT，境外服务应为 PROXY；检查实际连接，不只看一个出口检测网站。
-2. 查看 DNS 记录，并结合网络侧抓包及必要的服务端记录，确认境外测试域名不走本地或系统 DNS。解析器国家和网页出口 IP 不能单独证明无泄露。
-3. 分别测试 Wi-Fi、蜂窝和锁屏唤醒，检查 IPv4 业务与节点入口；保持 VPN 开启，改选不可用节点，境外请求应失败而不是直连。
-4. 用未缓存的测试域名检查 DNS 失败路径，并测试银行登录、支付、通话和国内视频。
+1. Review connection logs: primary mainland app traffic should use DIRECT, and overseas services should use PROXY. Inspect actual connections, not just one exit-IP test website.
+2. Review DNS logs together with network packet captures and, where needed, server logs to confirm that overseas test domains do not use local or system DNS. Resolver country and website exit IP alone cannot prove the absence of leaks.
+3. Test Wi-Fi, cellular, and wake-from-lock behavior. Check IPv4 service traffic and the node entry connection. With the VPN still enabled, select an unavailable node: overseas requests should fail rather than connect directly.
+4. Use uncached test domains to check DNS failure paths, and test banking login, payments, calls, and mainland video services.
 
-已完成配置静态检查；尚未完成你的 iPhone 导入、实际链路抓包或测速。远程规则会变化，更新失败时应检查缓存和加载状态。
+Static configuration checks have been completed. Import testing on your iPhone, packet captures on the actual connection, and speed tests remain outstanding. Remote rules can change; check their cache and loading status if updates fail.
 
-## 参考
+## References
 
-- [Shadowrocket App Store](https://apps.apple.com/us/app/shadowrocket/id932747118)：2026-09-29 核对公开版本为 2.2.92；手机安装版本需自行确认。
-- [LOWERTOP/Shadowrocket](https://github.com/LOWERTOP/Shadowrocket) 与 [lazy.conf](https://github.com/LOWERTOP/Shadowrocket/blob/main/lazy.conf)：社区参数说明，部分内容可能涉及测试版。
-- [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules)：使用 `release/ruleset/` 中的代理、直连和 Telegram IP 规则。
-- [Cloudflare DoH](https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/)、[Google DoH](https://developers.google.com/speed/public-dns/docs/doh)、[阿里 DNS](https://www.alidns.com/)、[DNSPod 社区接入示例](https://developer.cloud.tencent.com/article/2404099)。
+- [Shadowrocket App Store](https://apps.apple.com/us/app/shadowrocket/id932747118): the public version was checked as 2.2.92 on 2026-09-29. Confirm the version installed on your device.
+- [LOWERTOP/Shadowrocket](https://github.com/LOWERTOP/Shadowrocket) and [lazy.conf](https://github.com/LOWERTOP/Shadowrocket/blob/main/lazy.conf): community parameter documentation; some content may cover beta versions.
+- [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules): proxy, direct, and Telegram IP rules from `release/ruleset/`.
+- [Cloudflare DoH](https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/), [Google DoH](https://developers.google.com/speed/public-dns/docs/doh), [AliDNS](https://www.alidns.com/), and the [DNSPod community setup example](https://developer.cloud.tencent.com/article/2404099).

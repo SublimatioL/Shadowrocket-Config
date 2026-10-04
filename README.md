@@ -13,6 +13,7 @@ Personal settings with IPv6 disabled by default.
 ## Notes
 
 - Nodes and subscriptions are not included.
+- Fake-IP uses limited local, time-sync and connectivity-check exceptions.
 - Enable UDP on a compatible node when needed.
 - Check node-level IPv6 settings separately and avoid conflicting DNS or routing overrides.
 - Static checks only; verify essential apps on your device.

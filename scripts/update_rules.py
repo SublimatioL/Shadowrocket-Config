@@ -4,7 +4,9 @@ import csv
 import io
 import ipaddress
 import json
+import os
 from pathlib import Path
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 
@@ -20,7 +22,11 @@ DIRECT_URL = (
 
 
 def download(url):
-    request = Request(url, headers={"User-Agent": "Shadowrocket-Config"})
+    headers = {"User-Agent": "Shadowrocket-Config"}
+    token = os.environ.get("GITHUB_TOKEN")
+    if token and urlsplit(url).hostname == "api.github.com":
+        headers["Authorization"] = "Bearer " + token
+    request = Request(url, headers=headers)
     with urlopen(request, timeout=30) as response:
         return response.read().decode("utf-8-sig")
 

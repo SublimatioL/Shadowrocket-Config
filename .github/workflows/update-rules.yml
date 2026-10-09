@@ -18,6 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Refresh and check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: python3 scripts/update_rules.py
       - name: Save rules
         run: |

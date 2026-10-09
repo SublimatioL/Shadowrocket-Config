@@ -14,8 +14,12 @@ Personal settings with IPv6 disabled by default.
 
 - Nodes and subscriptions are not included.
 - Fake-IP uses limited local, time-sync and connectivity-check exceptions.
+- Domestic rules are filtered and refreshed daily.
 - Enable UDP on a compatible node when needed.
+- Keep the CONNECT test URL unchanged when comparing nodes.
 - Check node-level IPv6 settings separately and avoid conflicting DNS or routing overrides.
 - Static checks only; verify essential apps on your device.
 
 References: [Shadowrocket](https://apps.apple.com/us/app/shadowrocket/id932747118), [LOWERTOP](https://github.com/LOWERTOP/Shadowrocket), [Loyalsoldier](https://github.com/Loyalsoldier/surge-rules).
+
+Filtered rules retain the upstream [GPL-3.0 license](rules/LICENSE).

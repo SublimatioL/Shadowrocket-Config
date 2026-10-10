@@ -41,7 +41,19 @@ function cpUniversal(config) {
     ['韩国', /\ud83c\uddf0\ud83c\uddf7|\u97e9\u56fd|\u97d3\u570b|\bKR\b|Korea/i],
     ['法国', /\ud83c\uddeb\ud83c\uddf7|\u6cd5\u56fd|\u6cd5\u570b|\bFR\b|France/i],
     ['加拿大', /\ud83c\udde8\ud83c\udde6|\u52a0\u62ff\u5927|\bCA\b|Canada/i],
-    ['澳大利亚', /\ud83c\udde6\ud83c\uddfa|\u6fb3\u5927\u5229\u4e9a|\u6fb3\u5927\u5229\u4e9e|\u6fb3\u6d32|\bAU\b|Australia/i]
+    ['澳大利亚', /\ud83c\udde6\ud83c\uddfa|\u6fb3\u5927\u5229\u4e9a|\u6fb3\u5927\u5229\u4e9e|\u6fb3\u6d32|\bAU\b|Australia/i],
+    ['西班牙', /🇪🇸|西班牙|\bES\b|Spain/i],
+    ['瑞士', /🇨🇭|瑞士|\bCH\b|Switzerland/i],
+    ['瑞典', /🇸🇪|瑞典|\bSE\b|Sweden/i],
+    ['挪威', /🇳🇴|挪威|\bNO\b|Norway/i],
+    ['希腊', /🇬🇷|希腊|希臘|\bGR\b|Greece/i],
+    ['俄罗斯', /🇷🇺|俄罗斯|俄羅斯|莫斯科|\bRU\b|Russia|Moscow/i],
+    ['阿联酋', /🇦🇪|阿联酋|阿聯酋|迪拜|杜拜|\bAE\b|\bUAE\b|Dubai|Abu[ _-]?Dhabi|United[ _-]?Arab[ _-]?Emirates/i],
+    ['沙特阿拉伯', /🇸🇦|沙特|沙烏地|\bSA\b|Saudi/i],
+    ['以色列', /🇮🇱|以色列|\bIL\b|Israel/i],
+    ['土耳其', /🇹🇷|土耳其|\bTR\b|Turkey|Turkiye|Türkiye/i],
+    ['伊拉克', /🇮🇶|伊拉克|\bIQ\b|Iraq/i],
+    ['埃及', /🇪🇬|埃及|\bEG\b|Egypt/i]
   ];
   var countryGroups = [];
   var countries = Object.create(null);
@@ -185,7 +197,7 @@ function cpUniversal(config) {
 function cpManagedGroup(name) {
   return name.indexOf('CP-U-') === 0 ||
     ['代理选择', '自动优选', '境外解析', '聊天助手', '谷歌助手', 'ChatGPT', 'Gemini', 'Claude', 'Grok', 'AI 服务'].indexOf(name) >= 0 ||
-    /^(香港|台湾|新加坡|日本|美国|德国|英国|韩国|法国|加拿大|澳大利亚)节点$/.test(name);
+    /^(香港|台湾|新加坡|日本|美国|德国|英国|韩国|法国|加拿大|澳大利亚|西班牙|瑞士|瑞典|挪威|希腊|俄罗斯|阿联酋|沙特阿拉伯|以色列|土耳其|伊拉克|埃及)节点$/.test(name);
 }
 
 function cpTrimGroups(config, managed) {

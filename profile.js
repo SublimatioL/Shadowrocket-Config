@@ -35,9 +35,9 @@ function main(input) {
 
 function cpUniversal(config) {
   var prefix = 'CP-U-';
-  var proxy = prefix + 'Proxy';
-  var automatic = prefix + 'Auto';
-  var dnsGroup = prefix + 'DNS';
+  var proxy = '代理选择';
+  var automatic = '自动优选';
+  var dnsGroup = '境外解析';
   var nodes = Array.isArray(config.proxies) ? config.proxies : [];
   var providers = Object.keys(config['proxy-providers'] || {});
   var nodeMap = Object.create(null);
@@ -49,37 +49,39 @@ function cpUniversal(config) {
   if (!names.length && !providers.length) throw new Error('No usable proxy nodes or providers.');
 
   var inheritedGroups = (config['proxy-groups'] || []).filter(function (group) {
-    return group.name !== 'ChatGPT' && group.name !== 'Gemini' && group.name.indexOf(prefix) !== 0;
+    return !cpManagedGroup(group.name);
   }).map(function (group) {
-    return Object.assign({}, group, { 'empty-fallback': 'REJECT' });
+    var saved = Object.assign({}, group, { 'empty-fallback': 'REJECT' });
+    if (saved.url === 'http://www.gstatic.com/generate_204') saved.url = 'https://www.gstatic.com/generate_204';
+    return saved;
   });
   var groupMap = Object.create(null);
   inheritedGroups.forEach(function (group) { groupMap[group.name] = group; });
   var inheritedRules = config.rules || [];
   var regions = [
-    ['HK', /\ud83c\udded\ud83c\uddf0|\u9999\u6e2f|\bHK\b|Hong[ _-]?Kong/i],
-    ['TW', /\ud83c\uddf9\ud83c\uddfc|\u53f0\u6e7e|\u53f0\u7063|\bTW\b|Taiwan/i],
-    ['SG', /\ud83c\uddf8\ud83c\uddec|\u65b0\u52a0\u5761|\u72ee\u57ce|\u7345\u57ce|\bSG\b|Singapore/i],
-    ['JP', /\ud83c\uddef\ud83c\uddf5|\u65e5\u672c|\u4e1c\u4eac|\u6771\u4eac|\u5927\u962a|\bJP\b|Japan/i],
-    ['US', /\ud83c\uddfa\ud83c\uddf8|\u7f8e\u56fd|\u7f8e\u570b|\bUS\b|USA|United[ _-]?States/i],
-    ['DE', /\ud83c\udde9\ud83c\uddea|\u5fb7\u56fd|\u5fb7\u570b|\bDE\b|Germany/i],
-    ['UK', /\ud83c\uddec\ud83c\udde7|\u82f1\u56fd|\u82f1\u570b|\bUK\b|\bGB\b|United[ _-]?Kingdom/i],
-    ['KR', /\ud83c\uddf0\ud83c\uddf7|\u97e9\u56fd|\u97d3\u570b|\bKR\b|Korea/i],
-    ['FR', /\ud83c\uddeb\ud83c\uddf7|\u6cd5\u56fd|\u6cd5\u570b|\bFR\b|France/i],
-    ['CA', /\ud83c\udde8\ud83c\udde6|\u52a0\u62ff\u5927|\bCA\b|Canada/i],
-    ['AU', /\ud83c\udde6\ud83c\uddfa|\u6fb3\u5927\u5229\u4e9a|\u6fb3\u5927\u5229\u4e9e|\u6fb3\u6d32|\bAU\b|Australia/i]
+    ['香港', /\ud83c\udded\ud83c\uddf0|\u9999\u6e2f|\bHK\b|Hong[ _-]?Kong/i],
+    ['台湾', /\ud83c\uddf9\ud83c\uddfc|\u53f0\u6e7e|\u53f0\u7063|\bTW\b|Taiwan/i],
+    ['新加坡', /\ud83c\uddf8\ud83c\uddec|\u65b0\u52a0\u5761|\u72ee\u57ce|\u7345\u57ce|\bSG\b|Singapore/i],
+    ['日本', /\ud83c\uddef\ud83c\uddf5|\u65e5\u672c|\u4e1c\u4eac|\u6771\u4eac|\u5927\u962a|\bJP\b|Japan/i],
+    ['美国', /\ud83c\uddfa\ud83c\uddf8|\u7f8e\u56fd|\u7f8e\u570b|\bUS\b|USA|United[ _-]?States/i],
+    ['德国', /\ud83c\udde9\ud83c\uddea|\u5fb7\u56fd|\u5fb7\u570b|\bDE\b|Germany/i],
+    ['英国', /\ud83c\uddec\ud83c\udde7|\u82f1\u56fd|\u82f1\u570b|\bUK\b|\bGB\b|United[ _-]?Kingdom/i],
+    ['韩国', /\ud83c\uddf0\ud83c\uddf7|\u97e9\u56fd|\u97d3\u570b|\bKR\b|Korea/i],
+    ['法国', /\ud83c\uddeb\ud83c\uddf7|\u6cd5\u56fd|\u6cd5\u570b|\bFR\b|France/i],
+    ['加拿大', /\ud83c\udde8\ud83c\udde6|\u52a0\u62ff\u5927|\bCA\b|Canada/i],
+    ['澳大利亚', /\ud83c\udde6\ud83c\uddfa|\u6fb3\u5927\u5229\u4e9a|\u6fb3\u5927\u5229\u4e9e|\u6fb3\u6d32|\bAU\b|Australia/i]
   ];
   var countryGroups = [];
   var countries = Object.create(null);
   regions.forEach(function (region) {
     var members = usable.filter(function (node) { return region[1].test(node.name); });
     if (members.length) {
-      var name = prefix + region[0];
+      var name = region[0] + '节点';
       countries[region[0]] = name;
       countryGroups.push(cpGroup(name, 'select', members.map(function (node) { return node.name; })));
     }
   });
-  var managedNames = [automatic, proxy, dnsGroup, 'ChatGPT', 'Gemini'].concat(
+  var managedNames = [proxy, automatic, '聊天助手', '谷歌助手', dnsGroup].concat(
     countryGroups.map(function (group) { return group.name; })
   );
   managedNames.forEach(function (name) {
@@ -91,7 +93,7 @@ function cpUniversal(config) {
   autoGroup.timeout = 5000;
   autoGroup.tolerance = 80;
   autoGroup.lazy = true;
-  var preferred = ['US', 'JP', 'SG', 'TW'].map(function (country) {
+  var preferred = ['美国', '日本', '新加坡', '台湾'].map(function (country) {
     return countries[country];
   }).filter(Boolean);
   config['proxy-groups'] = inheritedGroups.concat([
@@ -100,8 +102,8 @@ function cpUniversal(config) {
       return group.name;
     })).concat(names)),
     cpGroup(dnsGroup, 'select', [proxy]),
-    cpGroup('ChatGPT', 'select', preferred.concat([proxy])),
-    cpGroup('Gemini', 'select', preferred.concat([proxy]))
+    cpGroup('聊天助手', 'select', preferred.concat([proxy])),
+    cpGroup('谷歌助手', 'select', preferred.concat([proxy]))
   ]).concat(countryGroups);
 
   // Shared service domains.
@@ -147,7 +149,7 @@ function cpUniversal(config) {
   var localDomains = ['lan', 'local', 'localdomain', 'home.arpa'];
   rules.push('DOMAIN,localhost,DIRECT');
   localDomains.forEach(function (domain) { rules.push('DOMAIN-SUFFIX,' + domain + ',DIRECT'); });
-  rules.push('RULE-SET,' + prefix + 'OpenAI,ChatGPT', 'RULE-SET,' + prefix + 'Gemini,Gemini');
+  rules.push('RULE-SET,' + prefix + 'OpenAI,聊天助手', 'RULE-SET,' + prefix + 'Gemini,谷歌助手');
   var inheritedForeign = [];
   inheritedRules.forEach(function (rule) {
     if (typeof rule !== 'string') return;
@@ -156,10 +158,13 @@ function cpUniversal(config) {
     var domain = parts[1].replace(/^\./, '');
     if (!domain || domain.indexOf('.') < 0 || /[*+\s]/.test(domain)) return;
     var target = parts[2];
-    if (target.indexOf(prefix) === 0) return;
+    var aiTarget = ['ChatGPT', 'Gemini', '聊天助手', '谷歌助手'].indexOf(target) >= 0;
+    if (cpManagedGroup(target) && !aiTarget) return;
     if (target === 'REJECT' || target === 'REJECT-DROP') rules.push(rule);
-    else if (target === 'ChatGPT' || target === 'Gemini' || cpSafeTarget(target, nodeMap, groupMap, [])) {
-      rules.push(rule);
+    else if (aiTarget || cpSafeTarget(target, nodeMap, groupMap, [])) {
+      if (target === 'ChatGPT') parts[2] = '聊天助手';
+      if (target === 'Gemini') parts[2] = '谷歌助手';
+      rules.push(parts.join(','));
       inheritedForeign.push('+.' + domain);
     }
   });
@@ -181,6 +186,7 @@ function cpUniversal(config) {
   });
   rules.push('MATCH,' + proxy);
   config.rules = Array.from(new Set(rules));
+  cpTrimGroups(config, managedNames);
   config.mode = 'rule';
   config.ipv6 = false;
   config.profile = Object.assign({}, config.profile || {}, {
@@ -200,6 +206,67 @@ function cpUniversal(config) {
   }
   console.log('[Profile] Applied.');
   return config;
+}
+
+function cpManagedGroup(name) {
+  return name.indexOf('CP-U-') === 0 ||
+    ['代理选择', '自动优选', '境外解析', '聊天助手', '谷歌助手', 'ChatGPT', 'Gemini'].indexOf(name) >= 0 ||
+    /^(香港|台湾|新加坡|日本|美国|德国|英国|韩国|法国|加拿大|澳大利亚)节点$/.test(name);
+}
+
+function cpTrimGroups(config, managed) {
+  var groups = config['proxy-groups'];
+  var byName = Object.create(null);
+  var used = Object.create(null);
+  groups.forEach(function (group) { byName[group.name] = group; });
+  function keep(name) {
+    if (!byName[name] || used[name]) return;
+    used[name] = true;
+    (byName[name].proxies || []).forEach(keep);
+  }
+  managed.forEach(keep);
+  config.rules.forEach(function (rule) {
+    var parts = rule.split(',');
+    keep(parts[parts.length - 1] === 'no-resolve' ? parts[parts.length - 2] : parts[parts.length - 1]);
+  });
+  (config.proxies || []).forEach(function (node) { keep(node['dialer-proxy']); });
+  ['proxy-providers', 'rule-providers'].forEach(function (key) {
+    Object.keys(config[key] || {}).forEach(function (name) { keep(config[key][name].proxy); });
+  });
+  var retained = groups.filter(function (group) { return used[group.name] && managed.indexOf(group.name) < 0; });
+  groups = managed.map(function (name) { return byName[name]; }).concat(retained);
+  var labels = { Netflix: '奈飞影视', TikTok: '国际短视频', Twitter: '推特服务',
+    Copilot: '微软助手', Steam: '游戏平台', YouTube: '视频服务', Telegram: '即时通讯' };
+  var renamed = Object.create(null);
+  retained.forEach(function (group, index) {
+    if (/[a-z]/i.test(group.name)) {
+      var label = labels[group.name] || ('订阅分组' + (index + 1));
+      while (byName[label]) label += '分组';
+      renamed[group.name] = label;
+      byName[label] = group;
+    }
+  });
+  function rename(name) { return renamed[name] || name; }
+  groups.forEach(function (group) {
+    group.name = rename(group.name);
+    if (group.proxies) group.proxies = group.proxies.map(rename);
+  });
+  config.rules = config.rules.map(function (rule) {
+    var parts = rule.split(',');
+    var index = parts[parts.length - 1] === 'no-resolve' ? parts.length - 2 : parts.length - 1;
+    parts[index] = rename(parts[index]);
+    return parts.join(',');
+  });
+  (config.proxies || []).forEach(function (node) {
+    if (node['dialer-proxy']) node['dialer-proxy'] = rename(node['dialer-proxy']);
+  });
+  ['proxy-providers', 'rule-providers'].forEach(function (key) {
+    Object.keys(config[key] || {}).forEach(function (name) {
+      var provider = config[key][name];
+      if (provider.proxy) provider.proxy = rename(provider.proxy);
+    });
+  });
+  config['proxy-groups'] = groups;
 }
 
 function cpGroup(name, type, proxies, providers) {

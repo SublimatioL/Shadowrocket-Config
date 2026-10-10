@@ -2,35 +2,7 @@
 // Rule mode; TUN on; DNS override and IPv6 off.
 
 function main(input) {
-  var original = JSON.parse(JSON.stringify(input || {}));
-  try {
-    return cpUniversal(original);
-  } catch (error) {
-    // Keep available local routes.
-    console.error('[Profile] Stopped: ' + error.message);
-    original.mode = 'rule';
-    original.ipv6 = false;
-    var rejectedDns = ['https://1.1.1.1/dns-query#REJECT'];
-    var resources = original['rule-providers'] || {};
-    var classification = ['CN', 'Foreign', 'OpenAI', 'Gemini'].every(function (name) {
-      return !!resources['CP-U-' + name];
-    });
-    var policy = {};
-    var rules = [];
-    if (classification) {
-      cpFinanceDomains().forEach(function (domain) {
-        policy['+.' + domain] = rejectedDns;
-        rules.push('DOMAIN-SUFFIX,' + domain + ',DIRECT');
-      });
-      policy['rule-set:CP-U-OpenAI,CP-U-Gemini,CP-U-Foreign'] = rejectedDns;
-      policy['rule-set:CP-U-CN'] = cpDomesticDns();
-      rules.push('RULE-SET,CP-U-OpenAI,REJECT', 'RULE-SET,CP-U-Gemini,REJECT',
-        'RULE-SET,CP-U-Foreign,REJECT', 'RULE-SET,CP-U-CN,DIRECT');
-    }
-    original.dns = cpDns(rejectedDns, policy, {});
-    original.rules = rules.concat(['MATCH,REJECT']);
-    return original;
-  }
+  return cpUniversal(JSON.parse(JSON.stringify(input || {})));
 }
 
 function cpUniversal(config) {
@@ -81,7 +53,7 @@ function cpUniversal(config) {
       countryGroups.push(cpGroup(name, 'select', members.map(function (node) { return node.name; })));
     }
   });
-  var managedNames = [proxy, automatic, '聊天助手', '谷歌助手', dnsGroup].concat(
+  var managedNames = [proxy, automatic, 'AI 服务', dnsGroup].concat(
     countryGroups.map(function (group) { return group.name; })
   );
   managedNames.forEach(function (name) {
@@ -102,8 +74,9 @@ function cpUniversal(config) {
       return group.name;
     })).concat(names)),
     cpGroup(dnsGroup, 'select', [proxy]),
-    cpGroup('聊天助手', 'select', preferred.concat([proxy])),
-    cpGroup('谷歌助手', 'select', preferred.concat([proxy]))
+    cpGroup('AI 服务', 'select', Array.from(new Set(preferred.concat(countryGroups.map(function (group) {
+      return group.name;
+    })).concat([proxy]))))
   ]).concat(countryGroups);
 
   // Shared service domains.
@@ -113,7 +86,7 @@ function cpUniversal(config) {
   Object.keys(ruleProviders).forEach(function (name) {
     if (name.indexOf(prefix) === 0) delete ruleProviders[name];
   });
-  [['CN', 'cn'], ['Foreign', 'geolocation-!cn'], ['OpenAI', 'openai'], ['Gemini', 'google-gemini']]
+  [['CN', 'cn'], ['Foreign', 'geolocation-!cn'], ['OpenAI', 'openai'], ['Gemini', 'google-gemini'], ['Claude', 'anthropic'], ['Grok', 'xai']]
     .forEach(function (entry) {
       ruleProviders[prefix + entry[0]] = {
         type: 'http', behavior: 'domain', format: 'mrs',
@@ -133,7 +106,7 @@ function cpUniversal(config) {
   var nodePolicy = cpEntryPolicy(oldDns, nodes);
   var policy = {};
   finance.forEach(function (domain) { policy['+.' + domain] = overseas; });
-  policy['rule-set:' + prefix + 'OpenAI,' + prefix + 'Gemini,' + prefix + 'Foreign'] = overseas;
+  policy['rule-set:' + prefix + 'OpenAI,' + prefix + 'Gemini,' + prefix + 'Claude,' + prefix + 'Grok,' + prefix + 'Foreign'] = overseas;
   policy['rule-set:' + prefix + 'CN'] = cpDomesticDns();
   config.dns = cpDns(overseas, policy, nodePolicy);
   var existingEntryResolvers = oldDns['proxy-server-nameserver'] || [];
@@ -149,7 +122,9 @@ function cpUniversal(config) {
   var localDomains = ['lan', 'local', 'localdomain', 'home.arpa'];
   rules.push('DOMAIN,localhost,DIRECT');
   localDomains.forEach(function (domain) { rules.push('DOMAIN-SUFFIX,' + domain + ',DIRECT'); });
-  rules.push('RULE-SET,' + prefix + 'OpenAI,聊天助手', 'RULE-SET,' + prefix + 'Gemini,谷歌助手');
+  ['OpenAI', 'Gemini', 'Claude', 'Grok'].forEach(function (name) {
+    rules.push('RULE-SET,' + prefix + name + ',AI 服务');
+  });
   var inheritedForeign = [];
   inheritedRules.forEach(function (rule) {
     if (typeof rule !== 'string') return;
@@ -158,12 +133,11 @@ function cpUniversal(config) {
     var domain = parts[1].replace(/^\./, '');
     if (!domain || domain.indexOf('.') < 0 || /[*+\s]/.test(domain)) return;
     var target = parts[2];
-    var aiTarget = ['ChatGPT', 'Gemini', '聊天助手', '谷歌助手'].indexOf(target) >= 0;
+    var aiTarget = ['ChatGPT', 'Gemini', 'Claude', 'Grok', '聊天助手', '谷歌助手', 'AI 服务'].indexOf(target) >= 0;
     if (cpManagedGroup(target) && !aiTarget) return;
     if (target === 'REJECT' || target === 'REJECT-DROP') rules.push(rule);
     else if (aiTarget || cpSafeTarget(target, nodeMap, groupMap, [])) {
-      if (target === 'ChatGPT') parts[2] = '聊天助手';
-      if (target === 'Gemini') parts[2] = '谷歌助手';
+      if (aiTarget) parts[2] = 'AI 服务';
       rules.push(parts.join(','));
       inheritedForeign.push('+.' + domain);
     }
@@ -173,7 +147,7 @@ function cpUniversal(config) {
     var orderedPolicy = {};
     finance.forEach(function (domain) { orderedPolicy['+.' + domain] = overseas; });
     inheritedForeign.forEach(function (domain) { orderedPolicy[domain] = overseas; });
-    orderedPolicy['rule-set:' + prefix + 'OpenAI,' + prefix + 'Gemini,' + prefix + 'Foreign'] = overseas;
+    orderedPolicy['rule-set:' + prefix + 'OpenAI,' + prefix + 'Gemini,' + prefix + 'Claude,' + prefix + 'Grok,' + prefix + 'Foreign'] = overseas;
     orderedPolicy['rule-set:' + prefix + 'CN'] = cpDomesticDns();
     config.dns['nameserver-policy'] = orderedPolicy;
   }
@@ -202,7 +176,7 @@ function cpUniversal(config) {
   });
   if (!config.tun.stack) config.tun.stack = 'mixed';
   if (nodes.some(function (node) { return node['skip-cert-verify'] === true; })) {
-    console.warn('[Profile] Some source nodes skip certificate checks.');
+    console.info('[Profile] Source certificate options retained.');
   }
   console.log('[Profile] Applied.');
   return config;
@@ -210,7 +184,7 @@ function cpUniversal(config) {
 
 function cpManagedGroup(name) {
   return name.indexOf('CP-U-') === 0 ||
-    ['代理选择', '自动优选', '境外解析', '聊天助手', '谷歌助手', 'ChatGPT', 'Gemini'].indexOf(name) >= 0 ||
+    ['代理选择', '自动优选', '境外解析', '聊天助手', '谷歌助手', 'ChatGPT', 'Gemini', 'Claude', 'Grok', 'AI 服务'].indexOf(name) >= 0 ||
     /^(香港|台湾|新加坡|日本|美国|德国|英国|韩国|法国|加拿大|澳大利亚)节点$/.test(name);
 }
 

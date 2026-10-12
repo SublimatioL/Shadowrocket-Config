@@ -13,7 +13,7 @@ Personal settings with IPv6 disabled by default.
 ## Notes
 
 - Nodes and subscriptions are not included.
-- Fake-IP uses limited local, time-sync and connectivity-check exceptions.
+- Real-IP exceptions cover local services, QQ, WeChat, Taobao, JD and Pinduoduo.
 - Domestic rules are filtered and refreshed daily.
 - Enable UDP on a compatible node when needed.
 - Keep the CONNECT test URL unchanged when comparing nodes.

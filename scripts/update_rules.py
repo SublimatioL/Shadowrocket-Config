@@ -1,6 +1,7 @@
 import argparse
 import configparser
 import csv
+import fnmatch
 import io
 import ipaddress
 import json
@@ -15,6 +16,12 @@ UPSTREAM = "Loyalsoldier/surge-rules"
 PROFILE = ROOT / "safe and high speed- China to overseas.conf"
 DIRECT_PATH = ROOT / "rules" / "direct.list"
 CLOUD_ROOTS = {"aliyun.com", "jdcloud.com"}
+APP_REAL_IP_DOMAINS = (
+    "qq.com", "weixin.com", "wechat.com", "gtimg.com", "gtimg.cn",
+    "qpic.cn", "qlogo.cn", "taobao.com", "tmall.com", "tbcdn.cn",
+    "alicdn.com", "jd.com", "360buyimg.com", "jdpay.com",
+    "pinduoduo.com", "yangkeduo.com", "pddpic.com",
+)
 DIRECT_URL = (
     "https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/"
     "main/rules/direct.list"
@@ -130,7 +137,15 @@ def check_profile(proxy_text):
     for key in ("direct-dns-server", "proxy-dns-server"):
         assert all(value.startswith("https://") for value in general[key].split(",")), key
     assert "system" not in general["fallback-dns-server"]
-    assert len(general["always-real-ip"].split(",")) == 7
+    real_ip_patterns = general["always-real-ip"].split(",")
+    expected_patterns = {
+        "localhost", "*.local", "*.lan", "*.home.arpa",
+        "captive.apple.com", "time.apple.com", "time-ios.apple.com",
+    }
+    for domain in APP_REAL_IP_DOMAINS:
+        expected_patterns.update((domain, "*." + domain))
+    assert len(real_ip_patterns) == len(expected_patterns)
+    assert set(real_ip_patterns) == expected_patterns
     assert sections["MITM"] == ["enable = false"]
     rules = list(csv.reader(sections["Rule"]))
     direct = read_domain_rules(DIRECT_PATH.read_text(encoding="utf-8"))
@@ -183,12 +198,25 @@ def check_profile(proxy_text):
         "unclassified-review-sample.aliyun.com": "PROXY",
         "unclassified-review-sample.jdcloud.com": "PROXY",
     }
+    for domain in APP_REAL_IP_DOMAINS:
+        for sample in (domain, "media." + domain):
+            cases[sample] = "DIRECT"
+            assert any(fnmatch.fnmatchcase(sample, p) for p in real_ip_patterns)
+        assert not any(
+            fnmatch.fnmatchcase(domain + ".unrelated.example", p)
+            for p in real_ip_patterns
+        )
     for domain, expected in cases.items():
         actual = policy(domain)
         assert actual == expected, (domain, expected, actual)
+        if expected == "PROXY":
+            assert not any(
+                fnmatch.fnmatchcase(domain, p) for p in real_ip_patterns
+            ), domain
     print(json.dumps({
         "result": "PASS - static checks only", "domainCases": len(cases),
         "profileRules": len(rules), "directRules": len(direct),
+        "realIpExceptions": len(real_ip_patterns),
         "clientRuntimeTested": False,
     }))
 

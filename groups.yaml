@@ -250,7 +250,13 @@ proxy-groups+:
   include-all: true
   filter: (?i)阿根廷|Argentina|\bAR\b|🇦🇷
   empty-fallback: REJECT
+- name: 更新下载
+  type: select
+  include-all: true
+  exclude-filter: ^(剩余流量|距离下次重置|套餐到期)
+  empty-fallback: REJECT
 +rules:
+- DOMAIN,tlu.dl.delivery.mp.microsoft.com,更新下载
 - DOMAIN-SUFFIX,chatgpt.com,AI 服务
 - DOMAIN-SUFFIX,openai.com,AI 服务
 - DOMAIN-SUFFIX,oaistatic.com,AI 服务

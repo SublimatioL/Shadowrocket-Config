@@ -15,6 +15,12 @@ ROOT = Path(__file__).resolve().parents[1]
 UPSTREAM = "Loyalsoldier/surge-rules"
 PROFILE = ROOT / "safe and high speed- China to overseas.conf"
 DIRECT_PATH = ROOT / "rules" / "direct.list"
+DOMAIN_PATH = ROOT / "rules" / "domestic.txt"
+SHARED_ROOTS = {
+    "aliyun.com", "jdcloud.com", "aliyuncs.com", "myqcloud.com", "qcloud.com",
+    "tencentcloud.com", "myhuaweicloud.com", "huaweicloud.com", "hwclouds.com",
+    "amazonaws.com", "cloudfront.net", "azurewebsites.net", "cloudflare.net",
+}
 CLOUD_ROOTS = {"aliyun.com", "jdcloud.com"}
 APP_REAL_IP_DOMAINS = (
     "qq.com", "weixin.com", "wechat.com", "gtimg.com", "gtimg.cn",
@@ -100,6 +106,17 @@ def matches(kind, value, domain):
     if kind == "DOMAIN-KEYWORD":
         return value in domain
     return False
+
+
+def domain_text():
+    rows = read_domain_rules(DIRECT_PATH.read_text(encoding="utf-8"))
+    values = {
+        ("+." if kind == "DOMAIN-SUFFIX" else "") + domain
+        for kind, domain in rows
+        if not (kind == "DOMAIN-SUFFIX" and ("." not in domain or domain in SHARED_ROOTS))
+    }
+    assert len(values) > 50000
+    return "# Derived from direct.list; GPL-3.0\n" + "\n".join(sorted(values)) + "\n"
 
 
 def check_profile(proxy_text):
@@ -236,6 +253,9 @@ def main():
     )
     if not args.check:
         refresh(ref)
+        DOMAIN_PATH.write_text(domain_text(), encoding="utf-8", newline="\n")
+    else:
+        assert DOMAIN_PATH.read_text(encoding="utf-8") == domain_text()
     check_profile(proxy_text)
 
 

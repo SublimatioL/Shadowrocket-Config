@@ -23,3 +23,25 @@ Personal settings with IPv6 disabled by default.
 References: [Shadowrocket](https://apps.apple.com/us/app/shadowrocket/id932747118), [LOWERTOP](https://github.com/LOWERTOP/Shadowrocket), [Loyalsoldier](https://github.com/Loyalsoldier/surge-rules).
 
 Filtered rules retain the upstream [GPL-3.0 license](rules/LICENSE).
+
+## Local routing
+
+[groups.yaml](https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/main/groups.yaml) replaces groups and rules in a Mihomo subscription. Keep DNS override on. Disable the old profile.js override. Nodes and providers are inherited; no credentials are stored here.
+
+- Groups: PROXY, 自动选择, 故障转移, AI服务, 社媒服务, 银行服务.
+- PROXY keeps plan notices. Automatic groups exclude notices and direct/reject nodes.
+- WeChat/QQ messaging, media and files use DIRECT. IP-only native-client traffic also uses DIRECT; external websites follow domain rules.
+- Listed IBKR/HK/MO/AE banks and mainland banks use 银行服务 (default DIRECT).
+- Mainland domains/IPs use DIRECT; other and unknown domains use PROXY. Fake-IP ranges are not bypassed.
+- DNS and TUN are not set by this file. Foreign resolver IPs 8.8.8.8 and 1.1.1.1 use 故障转移.
+- Imports replace rules, so custom subscription rules need review. Other clients must support Mihomo YAML merging.
+
+For overseas-bank DNS, add this first row in the existing DNS policy editor when enabling this override:
+
+| Policy | Servers |
+| --- | --- |
+| rule-set:bank-overseas | https://8.8.8.8/dns-query#故障转移,https://1.1.1.1/dns-query#故障转移 |
+
+Keep the existing domestic and foreign DNS policies. Routing alone does not update DNS policy; the bank row requires this override to be enabled. Plan notices remain informational, not recommended node choices. New app endpoints may need additions; no throughput or leak-test result is implied.
+
+Sources: [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat), [HKMA](https://www.hkma.gov.hk/eng/smart-consumers/payment-connect/), [AMCM](https://www.amcm.gov.mo/pt/news-notice/financial-consumption-dispute-settlement-plan/member-list), [UBF](https://ubf.ae/en/customers/member). Bank domains are scoped to listed services; shared bank domains can cover more than one region.

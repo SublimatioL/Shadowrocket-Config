@@ -45,3 +45,11 @@ For overseas-bank DNS, add this first row in the existing DNS policy editor when
 Keep the existing domestic and foreign DNS policies. Routing alone does not update DNS policy; the bank row requires this override to be enabled. Plan notices remain informational, not recommended node choices. New app endpoints may need additions; no throughput or leak-test result is implied.
 
 Sources: [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat), [HKMA](https://www.hkma.gov.hk/eng/smart-consumers/payment-connect/), [AMCM](https://www.amcm.gov.mo/pt/news-notice/financial-consumption-dispute-settlement-plan/member-list), [UBF](https://ubf.ae/en/customers/member). Bank domains are scoped to listed services; shared bank domains can cover more than one region.
+
+## Service groups
+
+[services.yaml](https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/main/services.yaml) refines the matching subscription into 23 groups. Bind it only to that profile in Clash Party; it inherits the original rule providers and current nodes. Use it separately from groups.yaml and profile.js.
+
+GPT and Claude are separate. X includes Grok; META includes Meta AI; Google includes Gemini, AI Studio and NotebookLM; Microsoft includes Copilot and GitHub Copilot. Dedicated AI rules precede broad categories. Other service groups remain. DNS and TUN are not changed.
+
+Inline service rules are a 2026-10-16 snapshot from [v2fly](https://github.com/v2fly/domain-list-community), under the [MIT license](rules/SERVICES-LICENSE). Refresh this file for future domain additions.

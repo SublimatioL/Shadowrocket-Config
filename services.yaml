@@ -83,6 +83,13 @@ proxy-groups:
   - 🌐 代理
   - 🎯 直连
   include-all: true
+- name: 🎨 Muse
+  type: select
+  url: http://www.gstatic.com/generate_204
+  proxies:
+  - 🌐 代理
+  - 🎯 直连
+  include-all: true
 - name: ✈️ 电报
   type: select
   url: http://www.gstatic.com/generate_204
@@ -780,7 +787,6 @@ rule-providers:
     - DOMAIN-SUFFIX,meta.ai
     - DOMAIN-SUFFIX,meta.com
     - DOMAIN-SUFFIX,metaaivm.com
-    - DOMAIN-SUFFIX,muse.ai
   detail-google:
     type: inline
     behavior: classical
@@ -852,6 +858,7 @@ rules:
 - RULE-SET,detail-gpt,🤖 GPT
 - RULE-SET,detail-claude,🤖 Claude
 - RULE-SET,detail-x,𝕏 X系
+- DOMAIN-SUFFIX,muse.ai,🎨 Muse
 - RULE-SET,detail-meta,🌐 META
 - RULE-SET,detail-google,🔍 谷歌
 - RULE-SET,detail-microsoft,🪟 微软

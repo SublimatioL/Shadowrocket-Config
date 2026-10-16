@@ -48,8 +48,8 @@ Sources: [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat), [HKMA](https:
 
 ## Service groups
 
-[services.yaml](https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/main/services.yaml) refines the matching subscription into 23 groups. Bind it only to that profile in Clash Party; it inherits the original rule providers and current nodes. Use it separately from groups.yaml and profile.js.
+[services.yaml](https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/main/services.yaml) refines the matching subscription into 24 groups. Bind it only to that profile in Clash Party; it inherits the original rule providers and current nodes. Use it separately from groups.yaml and profile.js.
 
-GPT and Claude are separate. X includes Grok; META includes Meta AI; Google includes Gemini, AI Studio and NotebookLM; Microsoft includes Copilot and GitHub Copilot. Dedicated AI rules precede broad categories. Other service groups remain. DNS and TUN are not changed.
+GPT and Claude are separate. X includes Grok; META includes Meta AI; Muse (muse.ai) has its own group; Google includes Gemini, AI Studio and NotebookLM; Microsoft includes Copilot and GitHub Copilot. Dedicated AI rules precede broad categories. Other service groups remain. DNS and TUN are not changed.
 
 Inline service rules are a 2026-10-16 snapshot from [v2fly](https://github.com/v2fly/domain-list-community), under the [MIT license](rules/SERVICES-LICENSE). Refresh this file for future domain additions.

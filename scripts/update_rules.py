@@ -28,6 +28,10 @@ APP_REAL_IP_DOMAINS = (
     "alicdn.com", "jd.com", "360buyimg.com", "jdpay.com",
     "pinduoduo.com", "yangkeduo.com", "pddpic.com",
 )
+PAYMENT_DOMAINS = (
+    "unionpay.com", "unionpay.net", "unionpaysecure.com", "chinaunionpay.com",
+    "95516.com", "95516.net", "chinapay.com", "chinaums.com",
+)
 DIRECT_URL = (
     "https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/"
     "main/rules/direct.list"
@@ -142,7 +146,7 @@ def check_profile(proxy_text):
         + "\n[Host]\n" + "\n".join(sections["Host"])
     )
     general = settings["General"]
-    for key in ("ipv6", "prefer-ipv6", "dns-direct-system"):
+    for key in ("ipv6", "prefer-ipv6", "dns-direct-system", "dns-direct-fallback-proxy"):
         assert general[key] == "false", key
     assert general["always-ip-address"] == "true"
     assert general["udp-policy-not-supported-behaviour"] == "REJECT"
@@ -154,6 +158,19 @@ def check_profile(proxy_text):
     for key in ("direct-dns-server", "proxy-dns-server"):
         assert all(value.startswith("https://") for value in general[key].split(",")), key
     assert "system" not in general["fallback-dns-server"]
+    domestic_dns = {
+        "https://dns.alidns.com/dns-query", "https://doh.pub/dns-query",
+    }
+    for key in ("direct-dns-server", "proxy-dns-server"):
+        assert set(general[key].split(",")) == domestic_dns, key
+    foreign_dns_ips = set()
+    for key in ("dns-server", "fallback-dns-server"):
+        for value in general[key].split(","):
+            endpoint = urlsplit(value)
+            assert endpoint.scheme == "https" and endpoint.fragment == "proxy", key
+            assert endpoint.path == "/dns-query", key
+            assert endpoint.hostname in {"1.1.1.1", "8.8.8.8"}, key
+            foreign_dns_ips.add(endpoint.hostname)
     real_ip_patterns = general["always-real-ip"].split(",")
     expected_patterns = {
         "localhost", "*.local", "*.lan", "*.home.arpa",
@@ -165,6 +182,25 @@ def check_profile(proxy_text):
     assert set(real_ip_patterns) == expected_patterns
     assert sections["MITM"] == ["enable = false"]
     rules = list(csv.reader(sections["Rule"]))
+    assert rules[:3] == [
+        ["DST-PORT", "53", "REJECT"],
+        ["DST-PORT", "853", "REJECT"],
+        ["IP-CIDR6", "::/0", "REJECT", "no-resolve"],
+    ]
+    first_remote = next(i for i, row in enumerate(rules) if row[0] == "RULE-SET")
+    for hostname in ("dns.alidns.com", "doh.pub"):
+        assert rules.index(["DOMAIN", hostname, "DIRECT"]) < first_remote
+        for address in settings["Host"][hostname].split(","):
+            assert ipaddress.ip_address(address).version == 4
+            assert rules.index([
+                "IP-CIDR", address + "/32", "DIRECT", "no-resolve",
+            ]) < first_remote
+    for address in foreign_dns_ips:
+        assert rules.index([
+            "IP-CIDR", address + "/32", "PROXY", "no-resolve",
+        ]) < first_remote
+    for domain in PAYMENT_DOMAINS:
+        assert rules.index(["DOMAIN-SUFFIX", domain, "DIRECT"]) < first_remote
     direct = read_domain_rules(DIRECT_PATH.read_text(encoding="utf-8"))
     proxy = read_domain_rules(proxy_text)
     assert direct == filter_rules(direct)
@@ -183,10 +219,12 @@ def check_profile(proxy_text):
             ), row
     tables = {"proxy.txt": proxy, "direct.list": direct}
 
-    def policy(domain):
+    def policy(domain, remote_available=True):
         for row in rules:
             kind = row[0]
             if kind == "RULE-SET":
+                if not remote_available:
+                    continue
                 table = tables.get(row[1].rsplit("/", 1)[-1], ())
                 if any(matches(*entry, domain) for entry in table):
                     return row[2]
@@ -214,7 +252,13 @@ def check_profile(proxy_text):
         "unclassified-review-sample.example": "PROXY",
         "unclassified-review-sample.aliyun.com": "PROXY",
         "unclassified-review-sample.jdcloud.com": "PROXY",
+        "user.95516.com": "DIRECT", "wallet.95516.com": "DIRECT",
+        "yunshanfu.unionpay.com": "DIRECT", "appcashier.95516.com": "DIRECT",
     }
+    for domain in PAYMENT_DOMAINS:
+        cases[domain] = "DIRECT"
+        cases["api." + domain] = "DIRECT"
+        cases[domain + ".unrelated.example"] = "PROXY"
     for domain in APP_REAL_IP_DOMAINS:
         for sample in (domain, "media." + domain):
             cases[sample] = "DIRECT"
@@ -230,10 +274,18 @@ def check_profile(proxy_text):
             assert not any(
                 fnmatch.fnmatchcase(domain, p) for p in real_ip_patterns
             ), domain
+    # Model missing tables; native download/compile failures require device testing.
+    independent_cases = {
+        domain: expected for domain, expected in cases.items()
+        if domain not in {"www.xiaomi.com", "www.mi.com"}
+    }
+    for domain, expected in independent_cases.items():
+        assert policy(domain, remote_available=False) == expected, domain
     print(json.dumps({
         "result": "PASS - static checks only", "domainCases": len(cases),
         "profileRules": len(rules), "directRules": len(direct),
         "realIpExceptions": len(real_ip_patterns),
+        "withoutRemoteTables": len(independent_cases),
         "clientRuntimeTested": False,
     }))
 

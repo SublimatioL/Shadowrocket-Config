@@ -1,5 +1,5 @@
 # Modified from Loyalsoldier/surge-rules; GPL-3.0
-# Source: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/d8ae14543c0eeebc6dc733a3a4551cce3e45bc5b/ruleset/direct.txt
+# Source: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/42afba754814f6cd08fb88338bcf8bc258f380ad/ruleset/direct.txt
 DOMAIN,2mdn-cn.net
 DOMAIN,2mdn.net
 DOMAIN,a1.mzstatic.com

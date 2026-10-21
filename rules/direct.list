@@ -1,5 +1,5 @@
 # Modified from Loyalsoldier/surge-rules; GPL-3.0
-# Source: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/8a13c2b7adbc61498b6eba92e8fb555a35cf22c3/ruleset/direct.txt
+# Source: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/1fad83e22cb98a0cec2615a7b00b40174c82b4cd/ruleset/direct.txt
 DOMAIN,2mdn-cn.net
 DOMAIN,2mdn.net
 DOMAIN,a1.mzstatic.com
@@ -85788,6 +85788,8 @@ DOMAIN-SUFFIX,sztxsz.com
 DOMAIN-SUFFIX,szty56.com
 DOMAIN-SUFFIX,sztz.org
 DOMAIN-SUFFIX,sztzzs.com
+DOMAIN-SUFFIX,szu.app
+DOMAIN-SUFFIX,szu.moe
 DOMAIN-SUFFIX,szuavia.org
 DOMAIN-SUFFIX,szudad.com
 DOMAIN-SUFFIX,szunionlab.com

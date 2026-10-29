@@ -14,7 +14,8 @@ Personal settings with IPv6 disabled by default.
 
 - Nodes and subscriptions are not included.
 - Real-IP exceptions cover local services, QQ, WeChat, Taobao, JD and Pinduoduo.
-- Domestic rules are filtered and refreshed daily.
+- Rules use checked snapshots. Update the profile to receive a newer snapshot.
+- Shared cloud domains use scoped mainland storage rules.
 - Enable UDP on a compatible node when needed.
 - Keep the CONNECT test URL unchanged when comparing nodes.
 - Check node-level IPv6 settings separately and avoid conflicting DNS or routing overrides.

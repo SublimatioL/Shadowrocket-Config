@@ -17,17 +17,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Check updater
+        run: python3 -B -m unittest discover -s tests
       - name: Refresh and check
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 scripts/update_rules.py
       - name: Save rules
         run: |
-          if git diff --quiet -- rules/direct.list rules/domestic.txt; then
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add rules/direct.list rules/domestic.txt rules/LICENSE
-          git commit -m 'Refresh domestic rules'
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh rule snapshot'
+            python3 scripts/update_rules.py --pin-ref "$(git rev-parse HEAD)"
+            git add 'safe and high speed- China to overseas.conf'
+            git commit -m 'Pin checked rule snapshot'
+          fi
+          python3 scripts/update_rules.py --check
           git push

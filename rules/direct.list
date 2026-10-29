@@ -1,5 +1,6 @@
 # Modified from Loyalsoldier/surge-rules; GPL-3.0
 # Source: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/6dcdb6bf663611e0e36d04dae16e6bb071f6807b/ruleset/direct.txt
+# Regional additions: cloud-direct.list
 DOMAIN,2mdn-cn.net
 DOMAIN,2mdn.net
 DOMAIN,a1.mzstatic.com
@@ -11624,7 +11625,6 @@ DOMAIN-SUFFIX,aliyuncdn.com
 DOMAIN-SUFFIX,aliyuncdn.net
 DOMAIN-SUFFIX,aliyunceng.com
 DOMAIN-SUFFIX,aliyuncname.xyz
-DOMAIN-SUFFIX,aliyuncs.com
 DOMAIN-SUFFIX,aliyuncsslb.com
 DOMAIN-SUFFIX,aliyuncsslbintl.com
 DOMAIN-SUFFIX,aliyunddos0002.com
@@ -24768,6 +24768,12 @@ DOMAIN-SUFFIX,corpring.com
 DOMAIN-SUFFIX,coryes.com
 DOMAIN-SUFFIX,cos-beauty.com
 DOMAIN-SUFFIX,cos-show.com
+DOMAIN-SUFFIX,cos.ap-beijing.myqcloud.com
+DOMAIN-SUFFIX,cos.ap-chengdu.myqcloud.com
+DOMAIN-SUFFIX,cos.ap-chongqing.myqcloud.com
+DOMAIN-SUFFIX,cos.ap-guangzhou.myqcloud.com
+DOMAIN-SUFFIX,cos.ap-nanjing.myqcloud.com
+DOMAIN-SUFFIX,cos.ap-shanghai.myqcloud.com
 DOMAIN-SUFFIX,cos126.com
 DOMAIN-SUFFIX,cosbuluo.com
 DOMAIN-SUFFIX,coschat.com
@@ -47200,7 +47206,6 @@ DOMAIN-SUFFIX,huaweicloud-idme.com
 DOMAIN-SUFFIX,huaweicloud-koophone.com
 DOMAIN-SUFFIX,huaweicloud-smn.com
 DOMAIN-SUFFIX,huaweicloud-smn.net
-DOMAIN-SUFFIX,huaweicloud.com
 DOMAIN-SUFFIX,huaweicloudapis.com
 DOMAIN-SUFFIX,huaweicloudsite.com
 DOMAIN-SUFFIX,huaweicloudwaf.com
@@ -47996,7 +48001,6 @@ DOMAIN-SUFFIX,hwcdnsre.com
 DOMAIN-SUFFIX,hwcloudlive.com
 DOMAIN-SUFFIX,hwclouds-dns.com
 DOMAIN-SUFFIX,hwclouds-dns.net
-DOMAIN-SUFFIX,hwclouds.com
 DOMAIN-SUFFIX,hwclouds.mobi
 DOMAIN-SUFFIX,hwclouds.net
 DOMAIN-SUFFIX,hwclouds.org
@@ -66492,7 +66496,6 @@ DOMAIN-SUFFIX,myhscodes.com
 DOMAIN-SUFFIX,myhuaweicloud-custom.com
 DOMAIN-SUFFIX,myhuaweicloud-koodrive.com
 DOMAIN-SUFFIX,myhuaweicloud-obs.com
-DOMAIN-SUFFIX,myhuaweicloud.com
 DOMAIN-SUFFIX,myhuilv.com
 DOMAIN-SUFFIX,myhuizhan.com
 DOMAIN-SUFFIX,myhwcdn.com
@@ -66586,7 +66589,6 @@ DOMAIN-SUFFIX,mypscloud.com
 DOMAIN-SUFFIX,mypsy365.com
 DOMAIN-SUFFIX,mypx.org
 DOMAIN-SUFFIX,myqbosuppportt.com
-DOMAIN-SUFFIX,myqcloud.com
 DOMAIN-SUFFIX,myqcloud.net
 DOMAIN-SUFFIX,myqee.com
 DOMAIN-SUFFIX,myqqjd.com
@@ -69540,6 +69542,9 @@ DOMAIN-SUFFIX,obowin.com
 DOMAIN-SUFFIX,obrao.com
 DOMAIN-SUFFIX,obriccloud.com
 DOMAIN-SUFFIX,obricclouddw.com
+DOMAIN-SUFFIX,obs.cn-east-3.myhuaweicloud.com
+DOMAIN-SUFFIX,obs.cn-north-4.myhuaweicloud.com
+DOMAIN-SUFFIX,obs.cn-south-1.myhuaweicloud.com
 DOMAIN-SUFFIX,obsapp.net
 DOMAIN-SUFFIX,obsbot.com
 DOMAIN-SUFFIX,obsidian-display.com
@@ -70342,6 +70347,17 @@ DOMAIN-SUFFIX,osr-tech.com
 DOMAIN-SUFFIX,osredm.com
 DOMAIN-SUFFIX,osrelease.download.prss.microsoft.com
 DOMAIN-SUFFIX,oss-cn-beijing-aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-beijing.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-chengdu.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-guangzhou.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-hangzhou.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-heyuan.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-huhehaote.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-qingdao.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-shanghai.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-shenzhen.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-wulanchabu.aliyuncs.com
+DOMAIN-SUFFIX,oss-cn-zhangjiakou.aliyuncs.com
 DOMAIN-SUFFIX,oss.link
 DOMAIN-SUFFIX,osslan.com
 DOMAIN-SUFFIX,osuxrq.com
@@ -72910,7 +72926,6 @@ DOMAIN-SUFFIX,qcjslm.com
 DOMAIN-SUFFIX,qclc.com
 DOMAIN-SUFFIX,qclivecdn.com
 DOMAIN-SUFFIX,qcloud-edumall.com
-DOMAIN-SUFFIX,qcloud.com
 DOMAIN-SUFFIX,qcloud.la
 DOMAIN-SUFFIX,qcloudapps.com
 DOMAIN-SUFFIX,qcloudcdn.com
@@ -86770,7 +86785,6 @@ DOMAIN-SUFFIX,tencentclb.work
 DOMAIN-SUFFIX,tencentclb.zone
 DOMAIN-SUFFIX,tencentcloud-aiot.com
 DOMAIN-SUFFIX,tencentcloud-demo.com
-DOMAIN-SUFFIX,tencentcloud.com
 DOMAIN-SUFFIX,tencentcloud.io
 DOMAIN-SUFFIX,tencentcloudapi.com
 DOMAIN-SUFFIX,tencentcloudapp.com

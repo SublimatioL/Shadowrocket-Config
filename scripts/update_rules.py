@@ -6,6 +6,7 @@ import io
 import ipaddress
 import json
 import os
+import subprocess
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
@@ -16,12 +17,12 @@ UPSTREAM = "Loyalsoldier/surge-rules"
 PROFILE = ROOT / "safe and high speed- China to overseas.conf"
 DIRECT_PATH = ROOT / "rules" / "direct.list"
 DOMAIN_PATH = ROOT / "rules" / "domestic.txt"
+CLOUD_PATH = ROOT / "rules" / "cloud-direct.list"
 SHARED_ROOTS = {
     "aliyun.com", "jdcloud.com", "aliyuncs.com", "myqcloud.com", "qcloud.com",
     "tencentcloud.com", "myhuaweicloud.com", "huaweicloud.com", "hwclouds.com",
     "amazonaws.com", "cloudfront.net", "azurewebsites.net", "cloudflare.net",
 }
-CLOUD_ROOTS = {"aliyun.com", "jdcloud.com"}
 APP_REAL_IP_DOMAINS = (
     "qq.com", "weixin.com", "wechat.com", "gtimg.com", "gtimg.cn",
     "qpic.cn", "qlogo.cn", "taobao.com", "tmall.com", "tbcdn.cn",
@@ -32,10 +33,7 @@ PAYMENT_DOMAINS = (
     "unionpay.com", "unionpay.net", "unionpaysecure.com", "chinaunionpay.com",
     "95516.com", "95516.net", "chinapay.com", "chinaums.com",
 )
-DIRECT_URL = (
-    "https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/"
-    "main/rules/direct.list"
-)
+REPO_RAW = "https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/"
 
 
 def download(url):
@@ -68,7 +66,7 @@ def filter_rules(rows):
         row for row in rows
         if not (
             row[0] == "DOMAIN-SUFFIX"
-            and ("." not in row[1] or row[1] in CLOUD_ROOTS)
+            and ("." not in row[1] or row[1] in SHARED_ROOTS)
         )
     ]
 
@@ -78,11 +76,12 @@ def refresh(ref):
         raise ValueError("Expected an upstream commit SHA")
     source = f"https://raw.githubusercontent.com/{UPSTREAM}/{ref}/ruleset/direct.txt"
     original = read_domain_rules(download(source))
-    filtered = filter_rules(original)
+    filtered = sorted(set(filter_rules(original) + cloud_rules()))
     if len(filtered) < 50000:
         raise ValueError("Unexpectedly small upstream list")
     output = io.StringIO(newline="")
     output.write(f"# Modified from {UPSTREAM}; GPL-3.0\n# Source: {source}\n")
+    output.write("# Regional additions: cloud-direct.list\n")
     csv.writer(output, lineterminator="\n").writerows(filtered)
     license_path = DIRECT_PATH.parent / "LICENSE"
     license_text = None
@@ -98,8 +97,71 @@ def refresh(ref):
     DIRECT_PATH.write_text(output.getvalue(), encoding="utf-8", newline="\n")
     print(json.dumps({
         "upstream": ref, "sourceRules": len(original),
-        "filteredRules": len(filtered), "removed": len(original) - len(filtered),
+        "filteredRules": len(filtered),
+        "removed": len(original) - len(filter_rules(original)),
+        "regionalRules": len(cloud_rules()),
     }))
+
+
+def cloud_rules():
+    rows = read_domain_rules(CLOUD_PATH.read_text(encoding="utf-8"))
+    assert rows and len(rows) == len(set(rows))
+    for kind, domain in rows:
+        assert kind == "DOMAIN-SUFFIX" and domain not in SHARED_ROOTS
+        assert any(domain.endswith("." + root) for root in SHARED_ROOTS)
+    return rows
+
+
+def valid_ref(ref):
+    return len(ref) == 40 and all(c in "0123456789abcdef" for c in ref)
+
+
+def source_ref():
+    lines = DIRECT_PATH.read_text(encoding="utf-8").splitlines()
+    source = next(line.removeprefix("# Source: ") for line in lines if line.startswith("# Source: "))
+    prefix = f"https://raw.githubusercontent.com/{UPSTREAM}/"
+    assert source.startswith(prefix) and source.endswith("/ruleset/direct.txt")
+    ref = source[len(prefix):].split("/", 1)[0]
+    assert valid_ref(ref)
+    return ref
+
+
+def snapshot_urls(ref):
+    assert valid_ref(ref)
+    committed = subprocess.check_output(
+        ["git", "show", f"{ref}:rules/direct.list"], cwd=ROOT,
+    ).decode("utf-8")
+    assert committed.replace("\r\n", "\n") == DIRECT_PATH.read_text(encoding="utf-8"), "Snapshot differs from checked rules"
+    upstream = f"https://raw.githubusercontent.com/{UPSTREAM}/{source_ref()}/ruleset/"
+    return {
+        "proxy.txt": upstream + "proxy.txt",
+        "direct.list": REPO_RAW + ref + "/rules/direct.list",
+        "telegramcidr.txt": upstream + "telegramcidr.txt",
+    }
+
+
+def pin_profile(ref):
+    urls = snapshot_urls(ref)
+    lines = PROFILE.read_text(encoding="utf-8").splitlines()
+    found = []
+    for index, line in enumerate(lines):
+        if line.startswith("RULE-SET,"):
+            row = next(csv.reader([line]))
+            name = row[1].rsplit("/", 1)[-1]
+            row[1] = urls[name]
+            lines[index] = ",".join(row)
+            found.append(name)
+    assert sorted(found) == sorted(urls)
+    PROFILE.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+
+def check_telegram(text):
+    rows = list(csv.reader(line for line in text.splitlines() if line and not line.startswith("#")))
+    assert rows
+    for row in rows:
+        assert len(row) == 2 and row[0] in {"IP-CIDR", "IP-CIDR6"}, row
+        network = ipaddress.ip_network(row[1])
+        assert network.version == (4 if row[0] == "IP-CIDR" else 6), row
 
 
 def matches(kind, value, domain):
@@ -123,7 +185,7 @@ def domain_text():
     return "# Derived from direct.list; GPL-3.0\n" + "\n".join(sorted(values)) + "\n"
 
 
-def check_profile(proxy_text):
+def check_profile(proxy_text, pending=False):
     text = PROFILE.read_text(encoding="utf-8")
     sections = {}
     current = None
@@ -205,7 +267,17 @@ def check_profile(proxy_text):
     proxy = read_domain_rules(proxy_text)
     assert direct == filter_rules(direct)
     assert len(direct) >= 50000
-    assert ["RULE-SET", DIRECT_URL, "DIRECT"] in rules
+    remote_rules = [row for row in rules if row[0] == "RULE-SET"]
+    assert [row[1].rsplit("/", 1)[-1] for row in remote_rules] == [
+        "proxy.txt", "direct.list", "telegramcidr.txt",
+    ]
+    assert [row[2:] for row in remote_rules] == [["PROXY"], ["DIRECT"], ["PROXY", "no-resolve"]]
+    if not pending:
+        direct_url = remote_rules[1][1]
+        assert direct_url.startswith(REPO_RAW)
+        ref = direct_url[len(REPO_RAW):].split("/", 1)[0]
+        expected_urls = snapshot_urls(ref)
+        assert all(row[1] == expected_urls[row[1].rsplit("/", 1)[-1]] for row in remote_rules)
     assert rules.index(["DOMAIN-KEYWORD", ".", "PROXY"]) < rules.index(
         ["GEOIP", "CN", "DIRECT", "no-resolve"]
     )
@@ -255,6 +327,21 @@ def check_profile(proxy_text):
         "user.95516.com": "DIRECT", "wallet.95516.com": "DIRECT",
         "yunshanfu.unionpay.com": "DIRECT", "appcashier.95516.com": "DIRECT",
     }
+    for domain in SHARED_ROOTS:
+        cases["unclassified-review-sample." + domain] = "PROXY"
+    regional_cases = set()
+    for _, domain in cloud_rules():
+        for sample in (domain, "review-bucket." + domain):
+            cases[sample] = "DIRECT"
+            regional_cases.add(sample)
+        cases[domain + ".unrelated.example"] = "PROXY"
+    for domain in (
+        "oss-cn-hongkong.aliyuncs.com", "oss-ap-southeast-1.aliyuncs.com",
+        "cos.ap-hongkong.myqcloud.com", "cos.ap-singapore.myqcloud.com",
+        "obs.ap-southeast-1.myhuaweicloud.com",
+    ):
+        cases[domain] = "PROXY"
+        cases["review-bucket." + domain] = "PROXY"
     for domain in PAYMENT_DOMAINS:
         cases[domain] = "DIRECT"
         cases["api." + domain] = "DIRECT"
@@ -277,7 +364,7 @@ def check_profile(proxy_text):
     # Model missing tables; native download/compile failures require device testing.
     independent_cases = {
         domain: expected for domain, expected in cases.items()
-        if domain not in {"www.xiaomi.com", "www.mi.com"}
+        if domain not in {"www.xiaomi.com", "www.mi.com"} | regional_cases
     }
     for domain, expected in independent_cases.items():
         assert policy(domain, remote_available=False) == expected, domain
@@ -286,6 +373,7 @@ def check_profile(proxy_text):
         "profileRules": len(rules), "directRules": len(direct),
         "realIpExceptions": len(real_ip_patterns),
         "withoutRemoteTables": len(independent_cases),
+        "snapshotPinned": not pending,
         "clientRuntimeTested": False,
     }))
 
@@ -293,9 +381,11 @@ def check_profile(proxy_text):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ref")
-    parser.add_argument("--check", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true")
+    mode.add_argument("--pin-ref")
     args = parser.parse_args()
-    ref = args.ref
+    ref = args.ref or (source_ref() if args.check or args.pin_ref else None)
     if ref is None:
         ref = json.loads(download(
             f"https://api.github.com/repos/{UPSTREAM}/commits/release"
@@ -303,12 +393,19 @@ def main():
     proxy_text = download(
         f"https://raw.githubusercontent.com/{UPSTREAM}/{ref}/ruleset/proxy.txt"
     )
-    if not args.check:
+    read_domain_rules(proxy_text)
+    check_telegram(download(
+        f"https://raw.githubusercontent.com/{UPSTREAM}/{ref}/ruleset/telegramcidr.txt"
+    ))
+    if not args.check and not args.pin_ref:
         refresh(ref)
         DOMAIN_PATH.write_text(domain_text(), encoding="utf-8", newline="\n")
     else:
+        assert ref == source_ref(), "Check the same upstream revision as direct.list"
         assert DOMAIN_PATH.read_text(encoding="utf-8") == domain_text()
-    check_profile(proxy_text)
+    if args.pin_ref:
+        pin_profile(args.pin_ref)
+    check_profile(proxy_text, pending=not (args.check or args.pin_ref))
 
 
 if __name__ == "__main__":

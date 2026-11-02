@@ -29,6 +29,43 @@ class RuleTests(unittest.TestCase):
         self.assertFalse(rules.matches("DOMAIN-SUFFIX", "qq.com", "qq.com.example"))
 
 
+class ProfileTests(unittest.TestCase):
+    def check_rejected_profile(self, original, modified, message):
+        self.assertNotEqual(original, modified)
+        with tempfile.TemporaryDirectory() as directory:
+            profile = Path(directory) / "profile.conf"
+            profile.write_text(modified, encoding="utf-8")
+            with patch.object(rules, "PROFILE", profile):
+                with self.assertRaisesRegex(AssertionError, message):
+                    rules.check_profile("")
+
+    def test_rejects_forced_client_resolution(self):
+        original = rules.PROFILE.read_text(encoding="utf-8")
+        self.assertIn("always-ip-address = false", original)
+        self.check_rejected_profile(original, original.replace(
+            "always-ip-address = false", "always-ip-address = true", 1,
+        ), "always-ip-address")
+
+    def test_requires_ipv6_enabled(self):
+        original = rules.PROFILE.read_text(encoding="utf-8")
+        self.check_rejected_profile(original, original.replace(
+            "ipv6 = true", "ipv6 = false", 1,
+        ), "ipv6")
+
+    def test_rejects_blanket_ipv6_block(self):
+        original = rules.PROFILE.read_text(encoding="utf-8")
+        self.check_rejected_profile(original, original.replace(
+            "DST-PORT,853,REJECT\n",
+            "DST-PORT,853,REJECT\nIP-CIDR6,::/0,REJECT,no-resolve\n", 1,
+        ), "IPv6 catch-all rejection")
+
+    def test_requires_ipv6_preference_off(self):
+        original = rules.PROFILE.read_text(encoding="utf-8")
+        self.check_rejected_profile(original, original.replace(
+            "prefer-ipv6 = false", "prefer-ipv6 = true", 1,
+        ), "prefer-ipv6")
+
+
 class SnapshotTests(unittest.TestCase):
     upstream = "a" * 40
     snapshot = "b" * 40

@@ -208,9 +208,10 @@ def check_profile(proxy_text, pending=False):
         + "\n[Host]\n" + "\n".join(sections["Host"])
     )
     general = settings["General"]
-    for key in ("ipv6", "prefer-ipv6", "dns-direct-system", "dns-direct-fallback-proxy"):
+    assert general["ipv6"] == "true", "ipv6"
+    for key in ("prefer-ipv6", "dns-direct-system", "dns-direct-fallback-proxy"):
         assert general[key] == "false", key
-    assert general["always-ip-address"] == "true"
+    assert general["always-ip-address"] == "false", "always-ip-address"
     assert general["udp-policy-not-supported-behaviour"] == "REJECT"
     for key in ("dns-server", "fallback-dns-server"):
         assert all(
@@ -244,11 +245,14 @@ def check_profile(proxy_text, pending=False):
     assert set(real_ip_patterns) == expected_patterns
     assert sections["MITM"] == ["enable = false"]
     rules = list(csv.reader(sections["Rule"]))
-    assert rules[:3] == [
+    assert rules[:2] == [
         ["DST-PORT", "53", "REJECT"],
         ["DST-PORT", "853", "REJECT"],
-        ["IP-CIDR6", "::/0", "REJECT", "no-resolve"],
     ]
+    assert not any(
+        row[0] in {"IP-CIDR", "IP-CIDR6"} and row[1] == "::/0" and row[2] == "REJECT"
+        for row in rules
+    ), "IPv6 catch-all rejection"
     first_remote = next(i for i, row in enumerate(rules) if row[0] == "RULE-SET")
     for hostname in ("dns.alidns.com", "doh.pub"):
         assert rules.index(["DOMAIN", hostname, "DIRECT"]) < first_remote

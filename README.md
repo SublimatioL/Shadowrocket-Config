@@ -1,6 +1,6 @@
 # Shadowrocket Config
 
-Personal settings with IPv6 disabled by default.
+Personal settings with IPv6 enabled, without IPv6 preference.
 
 [Download configuration](https://raw.githubusercontent.com/SublimatioL/Shadowrocket-Config/main/safe%20and%20high%20speed-%20China%20to%20overseas.conf)
 
@@ -13,6 +13,7 @@ Personal settings with IPv6 disabled by default.
 ## Notes
 
 - Nodes and subscriptions are not included.
+- Forced client-side resolution is off; remote DNS depends on the node.
 - Real-IP exceptions cover local services, QQ, WeChat, Taobao, JD and Pinduoduo.
 - Rules use checked snapshots. Update the profile to receive a newer snapshot.
 - Shared cloud domains use scoped mainland storage rules.

@@ -1,5 +1,5 @@
 # Modified from Loyalsoldier/surge-rules; GPL-3.0
-# Source: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/392fa2bd0e82629063b3c6d84239df5d253a69f5/ruleset/direct.txt
+# Source: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/48094ab05ddcfeab6781e084704bd64a238870f8/ruleset/direct.txt
 # Regional additions: cloud-direct.list
 DOMAIN,2mdn-cn.net
 DOMAIN,2mdn.net

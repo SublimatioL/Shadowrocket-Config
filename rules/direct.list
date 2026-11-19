@@ -1,5 +1,5 @@
 # Modified from Loyalsoldier/surge-rules; GPL-3.0
-# Source: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/a41b7992dbe9e9c75e93b522c3342146f73fd496/ruleset/direct.txt
+# Source: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/54664c0243b0b028a04bd8051ed6978745b74c29/ruleset/direct.txt
 # Regional additions: cloud-direct.list
 DOMAIN,2mdn-cn.net
 DOMAIN,2mdn.net
@@ -59573,6 +59573,7 @@ DOMAIN-SUFFIX,lenovocloudos.com
 DOMAIN-SUFFIX,lenovoconnect.com
 DOMAIN-SUFFIX,lenovoeservice.com
 DOMAIN-SUFFIX,lenovofile.com
+DOMAIN-SUFFIX,lenovofuturecenter.com
 DOMAIN-SUFFIX,lenovogame.com
 DOMAIN-SUFFIX,lenovohci.com
 DOMAIN-SUFFIX,lenovohuishang.com
@@ -74251,6 +74252,7 @@ DOMAIN-SUFFIX,qpjylm.com
 DOMAIN-SUFFIX,qpkaifa.com
 DOMAIN-SUFFIX,qplus.com
 DOMAIN-SUFFIX,qplusstatic.com
+DOMAIN-SUFFIX,qpmcn.com
 DOMAIN-SUFFIX,qpoc.com
 DOMAIN-SUFFIX,qpstar.com
 DOMAIN-SUFFIX,qpwater.com
@@ -89029,6 +89031,7 @@ DOMAIN-SUFFIX,troxchina.com
 DOMAIN-SUFFIX,trpc.center
 DOMAIN-SUFFIX,trpc.group
 DOMAIN-SUFFIX,trpc.tech
+DOMAIN-SUFFIX,trpcdn.com
 DOMAIN-SUFFIX,trpcdn.net
 DOMAIN-SUFFIX,trs-logistics.com
 DOMAIN-SUFFIX,trsoft.vip
@@ -106592,6 +106595,7 @@ DOMAIN-SUFFIX,zhaoketang.com
 DOMAIN-SUFFIX,zhaokuaizhao.com
 DOMAIN-SUFFIX,zhaolaobanla.com
 DOMAIN-SUFFIX,zhaoliangji.com
+DOMAIN-SUFFIX,zhaoliangjipc.com
 DOMAIN-SUFFIX,zhaoliming.net
 DOMAIN-SUFFIX,zhaoming.biz
 DOMAIN-SUFFIX,zhaomishijie.com

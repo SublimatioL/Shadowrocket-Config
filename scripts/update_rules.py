@@ -359,6 +359,7 @@ def check_profile(proxy_text, pending=False):
         "unclassified-review-sample.jdcloud.com": "PROXY",
         "user.95516.com": "DIRECT", "wallet.95516.com": "DIRECT",
         "yunshanfu.unionpay.com": "DIRECT", "appcashier.95516.com": "DIRECT",
+        "updates.cdn-apple.com": "DIRECT",
         "music.apple.com": "DIRECT", "amp-api.music.apple.com": "DIRECT",
         "play.itunes.apple.com": "DIRECT", "fpinit.itunes.apple.com": "DIRECT",
         "aod-ssl.itunes.apple.com": "DIRECT", "aod.itunes.apple.com": "DIRECT",
@@ -405,6 +406,7 @@ def check_profile(proxy_text, pending=False):
     if proxy:
         for domain in (
             "play-edge.itunes.apple.com", "np-edge.itunes.apple.com", "guzzoni.apple.com",
+            "iosapps.itunes.apple.com",
         ):
             assert policy(domain) == "PROXY", domain
     # Model missing tables; native download/compile failures require device testing.

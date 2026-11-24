@@ -55,8 +55,8 @@ class ProfileTests(unittest.TestCase):
     def test_rejects_blanket_ipv6_block(self):
         original = rules.PROFILE.read_text(encoding="utf-8")
         self.check_rejected_profile(original, original.replace(
-            "DST-PORT,853,REJECT\n",
-            "DST-PORT,853,REJECT\nIP-CIDR6,::/0,REJECT,no-resolve\n", 1,
+            "DST-PORT,853,REJECT-NO-DROP\n",
+            "DST-PORT,853,REJECT-NO-DROP\nIP-CIDR6,::/0,REJECT,no-resolve\n", 1,
         ), "IPv6 catch-all rejection")
 
     def test_requires_ipv6_preference_off(self):
@@ -64,6 +64,25 @@ class ProfileTests(unittest.TestCase):
         self.check_rejected_profile(original, original.replace(
             "prefer-ipv6 = false", "prefer-ipv6 = true", 1,
         ), "prefer-ipv6")
+
+    def test_rejects_dot_keyword_before_geoip(self):
+        original = rules.PROFILE.read_text(encoding="utf-8")
+        self.check_rejected_profile(original, original.replace(
+            "GEOIP,CN,DIRECT\n",
+            "DOMAIN-KEYWORD,.,PROXY\nGEOIP,CN,DIRECT\n", 1,
+        ), "unclassified keyword catch-all")
+
+    def test_rejects_no_resolve_on_geoip(self):
+        original = rules.PROFILE.read_text(encoding="utf-8")
+        self.check_rejected_profile(original, original.replace(
+            "GEOIP,CN,DIRECT\n", "GEOIP,CN,DIRECT,no-resolve\n", 1,
+        ), "tail geoip fallback")
+
+    def test_rejects_public_dns_in_tun_excluded_routes(self):
+        original = rules.PROFILE.read_text(encoding="utf-8")
+        self.check_rejected_profile(original, original.replace(
+            ",ff02::fb/128", ",223.5.5.5/32,ff02::fb/128", 1,
+        ), "tun-excluded-routes includes public range")
 
 
 class SnapshotTests(unittest.TestCase):

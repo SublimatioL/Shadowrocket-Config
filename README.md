@@ -14,7 +14,8 @@ Personal settings with IPv6 enabled, without IPv6 preference.
 
 - Nodes and subscriptions are not included.
 - Forced client-side resolution is off; remote DNS depends on the node.
-- Real-IP exceptions cover local services, QQ, WeChat, Taobao, JD and Pinduoduo.
+- Real-IP exceptions cover local services, QQ, WeChat, mini-programs, major payment domains, Taobao, JD and Pinduoduo.
+- Unclassified domains evaluate GEOIP,CN via proxied ECS DoH before FINAL,PROXY; using the Loyalsoldier/geoip database in Settings is recommended.
 - Rules use checked snapshots. Update the profile to receive a newer snapshot.
 - Shared cloud domains use scoped mainland storage rules.
 - Enable UDP on a compatible node when needed.

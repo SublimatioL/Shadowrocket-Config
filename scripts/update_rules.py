@@ -24,8 +24,11 @@ SHARED_ROOTS = {
     "amazonaws.com", "cloudfront.net", "azurewebsites.net", "cloudflare.net",
 }
 APP_REAL_IP_DOMAINS = (
-    "qq.com", "weixin.com", "wechat.com", "gtimg.com", "gtimg.cn",
-    "qpic.cn", "qlogo.cn", "taobao.com", "tmall.com", "tbcdn.cn",
+    "qq.com", "weixin.com", "wechat.com", "servicewechat.com",
+    "weixinbridge.com", "tenpay.com", "gtimg.com", "gtimg.cn",
+    "qpic.cn", "qlogo.cn", "unionpay.com", "unionpaysecure.com",
+    "95516.com", "chinapay.com", "chinaums.com", "alipay.com",
+    "alipayobjects.com", "taobao.com", "tmall.com", "tbcdn.cn",
     "alicdn.com", "jd.com", "360buyimg.com", "jdpay.com",
     "pinduoduo.com", "yangkeduo.com", "pddpic.com",
 )
@@ -208,32 +211,44 @@ def check_profile(proxy_text, pending=False):
         + "\n[Host]\n" + "\n".join(sections["Host"])
     )
     general = settings["General"]
+    assert general["compatibility-mode"] == "3", "compatibility-mode"
     assert general["ipv6"] == "true", "ipv6"
     for key in ("prefer-ipv6", "dns-direct-system", "dns-direct-fallback-proxy"):
         assert general[key] == "false", key
     assert general["always-ip-address"] == "false", "always-ip-address"
     assert general["udp-policy-not-supported-behaviour"] == "REJECT"
-    for key in ("dns-server", "fallback-dns-server"):
-        assert all(
-            value.startswith("https://") and value.endswith("#proxy")
-            for value in general[key].split(",")
-        ), key
-    for key in ("direct-dns-server", "proxy-dns-server"):
-        assert all(value.startswith("https://") for value in general[key].split(",")), key
+    proxy_dns_fragment = "proxy&ecs=223.5.5.0/24&ecs-override=true"
     assert "system" not in general["fallback-dns-server"]
     domestic_dns = {
-        "https://dns.alidns.com/dns-query", "https://doh.pub/dns-query",
+        "https://223.5.5.5/dns-query#no-h3", "https://1.12.12.12/dns-query#no-h3",
     }
+    domestic_dns_ips = set()
     for key in ("direct-dns-server", "proxy-dns-server"):
-        assert set(general[key].split(",")) == domestic_dns, key
+        values = general[key].split(",")
+        assert set(values) == domestic_dns, key
+        for value in values:
+            endpoint = urlsplit(value)
+            assert endpoint.scheme == "https" and endpoint.path == "/dns-query", key
+            assert endpoint.fragment == "no-h3", key
+            assert ipaddress.ip_address(endpoint.hostname).version == 4, key
+            domestic_dns_ips.add(endpoint.hostname)
     foreign_dns_ips = set()
     for key in ("dns-server", "fallback-dns-server"):
         for value in general[key].split(","):
             endpoint = urlsplit(value)
-            assert endpoint.scheme == "https" and endpoint.fragment == "proxy", key
+            assert endpoint.scheme == "https" and endpoint.fragment == proxy_dns_fragment, key
             assert endpoint.path == "/dns-query", key
-            assert endpoint.hostname in {"1.1.1.1", "8.8.8.8"}, key
+            assert endpoint.hostname in {"8.8.8.8", "8.8.4.4"}, key
             foreign_dns_ips.add(endpoint.hostname)
+    excluded_nets = [
+        ipaddress.ip_network(item)
+        for item in general["tun-excluded-routes"].split(",")
+    ]
+    assert ipaddress.ip_network("ff02::fb/128") in excluded_nets, "tun-excluded-routes"
+    for net in excluded_nets:
+        assert (not net.is_global) or net.is_multicast, f"tun-excluded-routes includes public range: {net}"
+        if net.version == 4:
+            assert not net.overlaps(ipaddress.ip_network("198.18.0.0/15")), net
     real_ip_patterns = general["always-real-ip"].split(",")
     expected_patterns = {
         "localhost", "*.local", "*.lan", "*.home.arpa",
@@ -246,8 +261,8 @@ def check_profile(proxy_text, pending=False):
     assert sections["MITM"] == ["enable = false"]
     rules = list(csv.reader(sections["Rule"]))
     assert rules[:2] == [
-        ["DST-PORT", "53", "REJECT"],
-        ["DST-PORT", "853", "REJECT"],
+        ["DST-PORT", "53", "REJECT-NO-DROP"],
+        ["DST-PORT", "853", "REJECT-NO-DROP"],
     ]
     assert not any(
         row[0] in {"IP-CIDR", "IP-CIDR6"} and row[1] == "::/0" and row[2] == "REJECT"
@@ -261,6 +276,14 @@ def check_profile(proxy_text, pending=False):
             assert rules.index([
                 "IP-CIDR", address + "/32", "DIRECT", "no-resolve",
             ]) < first_remote
+    for cidr in ("fe80::/10", "fc00::/7"):
+        assert rules.index([
+            "IP-CIDR6", cidr, "DIRECT", "no-resolve",
+        ]) < first_remote
+    for address in domestic_dns_ips:
+        assert rules.index([
+            "IP-CIDR", address + "/32", "DIRECT", "no-resolve",
+        ]) < first_remote
     for address in foreign_dns_ips:
         assert rules.index([
             "IP-CIDR", address + "/32", "PROXY", "no-resolve",
@@ -282,13 +305,13 @@ def check_profile(proxy_text, pending=False):
         ref = direct_url[len(REPO_RAW):].split("/", 1)[0]
         expected_urls = snapshot_urls(ref)
         assert all(row[1] == expected_urls[row[1].rsplit("/", 1)[-1]] for row in remote_rules)
-    assert rules.index(["DOMAIN-KEYWORD", ".", "PROXY"]) < rules.index(
-        ["GEOIP", "CN", "DIRECT", "no-resolve"]
-    )
-    assert rules[-1] == ["FINAL", "PROXY"]
+    assert ["DOMAIN-KEYWORD", ".", "PROXY"] not in rules, "unclassified keyword catch-all"
+    assert rules[-2:] == [["GEOIP", "CN", "DIRECT"], ["FINAL", "PROXY"]], "tail geoip fallback"
     for row in rules:
-        if row[0] in {"IP-CIDR", "IP-CIDR6", "GEOIP"}:
+        if row[0] in {"IP-CIDR", "IP-CIDR6"}:
             assert row[-1] == "no-resolve", row
+        if row[0] == "GEOIP":
+            assert row == ["GEOIP", "CN", "DIRECT"], row
         if row[0] == "IP-CIDR":
             assert not ipaddress.ip_network(row[1]).overlaps(
                 ipaddress.ip_network("198.18.0.0/15")

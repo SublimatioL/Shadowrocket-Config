@@ -18,6 +18,7 @@ Personal settings with IPv6 enabled, without IPv6 preference.
 - Unclassified domains evaluate GEOIP,CN via proxied ECS DoH before FINAL,PROXY; using the Loyalsoldier/geoip database in Settings is recommended.
 - Rules use checked snapshots. Update the profile to receive a newer snapshot.
 - Shared cloud domains use scoped mainland storage rules.
+- Scoped Apple Music playback hosts use DIRECT ahead of remote rules while Apple TV+ and Siri stay on PROXY.
 - Enable UDP on a compatible node when needed.
 - Keep the CONNECT test URL unchanged when comparing nodes.
 - Check node-level IPv6 settings separately and avoid conflicting DNS or routing overrides.

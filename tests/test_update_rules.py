@@ -84,6 +84,13 @@ class ProfileTests(unittest.TestCase):
             ",ff02::fb/128", ",223.5.5.5/32,ff02::fb/128", 1,
         ), "tun-excluded-routes includes public range")
 
+    def test_rejects_broad_itunes_suffix_direct(self):
+        original = rules.PROFILE.read_text(encoding="utf-8")
+        self.check_rejected_profile(original, original.replace(
+            "DOMAIN-SUFFIX,music.apple.com,DIRECT\n",
+            "DOMAIN-SUFFIX,music.apple.com,DIRECT\nDOMAIN-SUFFIX,itunes.apple.com,DIRECT\n", 1,
+        ), "broad Apple suffix direct")
+
 
 class SnapshotTests(unittest.TestCase):
     upstream = "a" * 40

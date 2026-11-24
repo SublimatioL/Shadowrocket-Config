@@ -268,6 +268,12 @@ def check_profile(proxy_text, pending=False):
         row[0] in {"IP-CIDR", "IP-CIDR6"} and row[1] == "::/0" and row[2] == "REJECT"
         for row in rules
     ), "IPv6 catch-all rejection"
+    assert not any(
+        row[0] == "DOMAIN-SUFFIX"
+        and row[1] in {"apple.com", "itunes.apple.com", "cdn-apple.com", "aaplimg.com", "applemusic.com"}
+        and row[2] == "DIRECT"
+        for row in rules
+    ), "broad Apple suffix direct"
     first_remote = next(i for i, row in enumerate(rules) if row[0] == "RULE-SET")
     for hostname in ("dns.alidns.com", "doh.pub"):
         assert rules.index(["DOMAIN", hostname, "DIRECT"]) < first_remote
@@ -353,6 +359,14 @@ def check_profile(proxy_text, pending=False):
         "unclassified-review-sample.jdcloud.com": "PROXY",
         "user.95516.com": "DIRECT", "wallet.95516.com": "DIRECT",
         "yunshanfu.unionpay.com": "DIRECT", "appcashier.95516.com": "DIRECT",
+        "music.apple.com": "DIRECT", "amp-api.music.apple.com": "DIRECT",
+        "play.itunes.apple.com": "DIRECT", "fpinit.itunes.apple.com": "DIRECT",
+        "aod-ssl.itunes.apple.com": "DIRECT", "aod.itunes.apple.com": "DIRECT",
+        "streamingaudio.itunes.apple.com": "DIRECT", "audio-ssl.itunes.apple.com": "DIRECT",
+        "mvod.itunes.apple.com": "DIRECT", "bag.itunes.apple.com": "DIRECT",
+        "init.itunes.apple.com": "DIRECT",
+        "hls.itunes.apple.com": "PROXY", "hls-amt.itunes.apple.com": "PROXY",
+        "uts-api.itunes.apple.com": "PROXY",
     }
     for domain in SHARED_ROOTS:
         cases["unclassified-review-sample." + domain] = "PROXY"
@@ -388,6 +402,11 @@ def check_profile(proxy_text, pending=False):
             assert not any(
                 fnmatch.fnmatchcase(domain, p) for p in real_ip_patterns
             ), domain
+    if proxy:
+        for domain in (
+            "play-edge.itunes.apple.com", "np-edge.itunes.apple.com", "guzzoni.apple.com",
+        ):
+            assert policy(domain) == "PROXY", domain
     # Model missing tables; native download/compile failures require device testing.
     independent_cases = {
         domain: expected for domain, expected in cases.items()
